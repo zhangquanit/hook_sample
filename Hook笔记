@@ -1,0 +1,8 @@
+
+一、Hook原理
+
+二、Hook技术之Activity的启动过程拦截
+http://www.jianshu.com/p/69bfbda302df
+1、hook ActivityManagerService的startActivity  替换真实的Intent为ProxyActivity的proxy Intent，并将真实的intent封装到proxy Intent中
+2、为了不启动ProxyActivity，找一个合适的时机，把真实的Intent换过了来，启动我们真正想启动的Activity。
+ActivityThread类中的Handler来处理启动的，所以我们要hook handler的处理消息，让我们优先得到处理(Callback)，替换真实的Intent。

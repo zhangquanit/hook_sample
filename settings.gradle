@@ -1,1 +1,1 @@
-include ':hooklistener_lib', ':hooklistener_sample', ':xposed_WeChatHook', ':xposed_wechat'
+include ':hooklistener_lib', ':hooklistener_sample', ':xposed_WeChatHook', ':xposed_wechat', ':hook_startactivity'
