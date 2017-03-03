@@ -1,8 +1,100 @@
+http://www.2cto.com/kf/201609/550038.html
 
-一、Hook原理
+一、Hook操作步骤
+1、寻找hook点
+2、替换原来的对象为代理对象(静态代理或动态代理)
+3、在代理对象中拦截方法，并转调原始对象的方法。
 
 二、Hook技术之Activity的启动过程拦截
 http://www.jianshu.com/p/69bfbda302df
 1、hook ActivityManagerService的startActivity  替换真实的Intent为ProxyActivity的proxy Intent，并将真实的intent封装到proxy Intent中
 2、为了不启动ProxyActivity，找一个合适的时机，把真实的Intent换过了来，启动我们真正想启动的Activity。
 ActivityThread类中的Handler来处理启动的，所以我们要hook handler的处理消息，让我们优先得到处理(Callback)，替换真实的Intent。
+
+1）hook  startActivity
+public abstract class ActivityManagerNative extends Binder implements IActivityManager
+{
+  static public IActivityManager getDefault() {
+     return gDefault.get();
+  }
+  //创建Singleton，内部创建IActivityManager。因此我们要拿到IActivityManager对象，提替换为我们代理的对象
+ private static final Singleton<IActivityManager> gDefault = new Singleton<IActivityManager>() {
+        protected IActivityManager create() {
+            IBinder b = ServiceManager.getService("activity");
+            if (false) {
+                Log.v("ActivityManager", "default service binder = " + b);
+            }
+            IActivityManager am = asInterface(b);
+            if (false) {
+                Log.v("ActivityManager", "default service = " + am);
+            }
+            return am;
+        }
+    };
+
+}
+
+    Class<?> ActivityManagerNativeClss = Class.forName("android.app.ActivityManagerNative");
+    //   private static final Singleton<IActivityManager> gDefault = new Singleton<IActivityManager>()
+    Field defaultFiled = ActivityManagerNativeClss.getDeclaredField("gDefault"); //gDefault静态字段
+    defaultFiled.setAccessible(true);
+    Object defaultValue = defaultFiled.get(null); //拿到Singleton对象
+
+    //反射SingleTon的mInstance字段，获取IActivityManager对象
+    Class<?> SingletonClass = Class.forName("android.util.Singleton");
+    Field mInstance = SingletonClass.getDeclaredField("mInstance");
+    mInstance.setAccessible(true);
+    Object iActivityManagerObject = mInstance.get(defaultValue); //拿到实际的IActivityManager对象
+
+
+    //开始动态代理，用代理对象替换掉真实的ActivityManager，然后在代理方法中实现自己的操作
+    Class<?> IActivityManagerIntercept = Class.forName("android.app.IActivityManager");
+    AmsInvocationHandler handler = new AmsInvocationHandler(iActivityManagerObject);
+    Object proxy = Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(), new Class<?>[]{IActivityManagerIntercept}, handler);
+
+    //现在替换掉这个对象
+    mInstance.set(defaultValue, proxy);
+
+2）启动ProxyActivity之前替换真实的Intent
+
+public final class ActivityThread {
+   final H mH = new H();
+   private class H extends Handler {
+   public static final int LAUNCH_ACTIVITY= 100;
+   public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case LAUNCH_ACTIVITY: //启动Activity
+                    final ActivityClientRecord r = (ActivityClientRecord) msg.obj;
+                    r.packageInfo = getPackageInfoNoCheck(
+                            r.activityInfo.applicationInfo, r.compatInfo);
+                    handleLaunchActivity(r, null, "LAUNCH_ACTIVITY");
+                    break;
+              }
+      }
+  }
+   static final class ActivityClientRecord {
+    Intent intent; //开启Activity的intent对象，因此我们要在handler执行handleMessage前，替换ActivityClientRecord中的intent为真实的intent。
+    ActivityClientRecord() {
+    }
+}
+
+    //
+    Class<?> activityThreadClass = Class.forName("android.app.ActivityThread");
+    Method currentActivityThreadMethod = activityThreadClass.getDeclaredMethod("currentActivityThread");
+    currentActivityThreadMethod.setAccessible(true);
+    //获取主线程对象
+    Object activityThread = currentActivityThreadMethod.invoke(null);
+    //获取mH字段
+    Field mH = activityThreadClass.getDeclaredField("mH");
+    mH.setAccessible(true);
+    //获取Handler
+    Handler handler = (Handler) mH.get(activityThread);
+
+
+    //获取原始的mCallBack字段
+    Field mCallBack = Handler.class.getDeclaredField("mCallback");
+    mCallBack.setAccessible(true);
+    //这里设置了我们自己实现了接口的CallBack对象，在handleMessage前优先处理消息
+    mCallBack.set(handler, new ActivityThreadHandlerCallback(handler)) ;
+
+三、Hook技术之Service的启动过程拦截

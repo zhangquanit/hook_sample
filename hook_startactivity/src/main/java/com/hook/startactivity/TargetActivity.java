@@ -21,4 +21,22 @@ public class TargetActivity extends Activity {
         super.onResume();
         Log.e("HookUtil","TargetActivity onResume compnentName="+getIntent().getComponent());
     }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        Log.e("HookUtil","TargetActivity onPause");
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        Log.e("HookUtil","TargetActivity onStop");
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        Log.e("HookUtil","TargetActivity onDestroy");
+    }
 }

@@ -1,6 +1,7 @@
 package com.hook.startactivity;
 
 import android.app.Activity;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
@@ -22,7 +23,9 @@ public class MainActivity extends Activity implements View.OnClickListener{
                 startActivity(new Intent(this,MainActivity.class));
                 break;
             case R.id.btn_startTarget:
-                Intent intent = new Intent(this, TargetActivity.class);
+//                Intent intent = new Intent(this, TargetActivity.class);
+                Intent intent = new Intent();
+                intent.setComponent(new ComponentName(getPackageName(),"com.hook.startactivity.TargetActivity"));
                 startActivity(intent);
                 break;
         }
