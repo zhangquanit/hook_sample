@@ -1,4 +1,4 @@
-package com.hook.startactivity;
+package com.hook.startservice;
 
 import android.app.Application;
 import android.content.Context;
@@ -12,8 +12,11 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MyApplication extends Application {
+/**
+ * @author 张全
+ */
 
+public class MyApp extends Application {
     List<String> dexPathList;
 
     {
@@ -31,16 +34,19 @@ public class MyApplication extends Application {
             e.printStackTrace();
         }
 
+        /**
+         dalvik.system.PathClassLoader[DexPathList[[zip file "/data/app/com.instant_run.demo-2/base.apk"],nativeLibraryDirectories=[/vendor/lib64, /system/lib64]]]
+         com.android.tools.fd.runtime.MyIncrementalClassLoader@352d6250
+         java.lang.BootClassLoader@12276c49
+         */
         ClassLoader classLoader = getClassLoader();
-        while(classLoader!=null){
+        while (classLoader != null) {
             System.out.println(classLoader);
-            classLoader=classLoader.getParent();
+            classLoader = classLoader.getParent();
         }
-
-        //这个ProxyActivity在清单文件中注册过，以后所有的Activitiy都可以用ProxyActivity无需声明，绕过监测
-        HookUtil hookUtil=new HookUtil(ProxyActivity.class, this);
-        hookUtil.hookAms();
-        hookUtil.hookSystemHandler();
+        /**
+         * 当前PathClassLoader委托IncrementalClassLoader加载dex
+         */
     }
 
     @Override
@@ -49,22 +55,28 @@ public class MyApplication extends Application {
         super.attachBaseContext(base);
     }
 
-    public void setUpClassLoader(Context context){
-        ClassLoader classLoader =MyApplication.class.getClassLoader();
-        String nativeLibraryPath=null;
-        try
-        {
-            nativeLibraryPath = (String)classLoader.getClass().getMethod("getLdLibraryPath", new Class[0]).invoke(classLoader, new Object[0]);
-        }
-        catch (Throwable t)
-        {
+    public void setUpClassLoader(Context context) {
+        ClassLoader classLoader = MyApp.class.getClassLoader();
+        String nativeLibraryPath = null;
+        try {
+            nativeLibraryPath = (String) classLoader.getClass().getMethod("getLdLibraryPath", new Class[0]).invoke(classLoader, new Object[0]);
+        } catch (Throwable t) {
             Log.e("InstantRun", "Failed to determine native library path " + t.getMessage());
-            nativeLibraryPath= new File("/data/data/"+getPackageName(), "lib").getPath();
+            nativeLibraryPath = new File("/data/data/" + getPackageName(), "lib").getPath();
         }
 
-        String codeCacheDir=context.getCacheDir().getPath();
-        String dexPath=new File(Environment.getExternalStorageDirectory(),"plugin-debug.apk").getAbsolutePath();
-        MyIncrementalClassLoader.inject(classLoader, nativeLibraryPath, codeCacheDir, dexPath);
+        StringBuilder pathBuilder = new StringBuilder();
+        for (int i = 0; i < dexPathList.size(); i++) {
+            if (i > 0) {
+                pathBuilder.append(File.pathSeparator);
+            }
+            pathBuilder.append(dexPathList.get(i));
+        }
+        String mDexPath=pathBuilder.toString();
+
+        // 无法直接从外部路径加载.dex文件，需要指定APP内部路径作为缓存目录（.dex文件会被解压到此目录）
+        String codeCacheDir = context.getDir("dexouput",Context.MODE_PRIVATE).getAbsolutePath();
+        MyIncrementalClassLoader.inject(classLoader, nativeLibraryPath, codeCacheDir, mDexPath);
     }
 
     //--------------------------------------------------------------------------------
@@ -95,7 +107,7 @@ public class MyApplication extends Application {
 
             AssetManager assetManager = AssetManager.class.newInstance();
             Method addAssetPath = assetManager.getClass().getMethod("addAssetPath", String.class);
-            addAssetPath.invoke(assetManager, dexPathList.get(0));
+            addAssetPath.invoke(assetManager, dexPathList.get(1));
 
             Resources superRes = super.getResources();
             mResources = new Resources(assetManager, superRes.getDisplayMetrics(), superRes.getConfiguration());
@@ -108,4 +120,5 @@ public class MyApplication extends Application {
             throw e;
         }
     }
+
 }

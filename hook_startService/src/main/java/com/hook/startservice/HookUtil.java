@@ -14,10 +14,12 @@ import java.lang.reflect.Method;
  */
 
 public class HookUtil {
-       static final String targetServiceName="com.hook.startservice.TargetService";
-   static ComponentName componentName=new ComponentName("com.hook.startservice", "com.hook.startservice.TargetService");
-//    static final String targetServiceName = "com.plugin.PluginService";
-//    static ComponentName componentName = new ComponentName("com.plugin", "com.plugin.PluginService");
+//       static final String targetServiceName="com.hook.startservice.TargetService";
+//   static ComponentName componentName=new ComponentName("com.hook.startservice", "com.hook.startservice.TargetService");
+    static String pkg="com.plugin2";
+    static final String targetServiceName = pkg+".PluginService";
+    static ComponentName componentName = new ComponentName(pkg, pkg+".PluginService");
+   static ComponentName activity= new ComponentName(pkg,pkg+".PluginActivity");
 
     public static void hookHandlerMessage() {
         try {
@@ -48,6 +50,7 @@ public class HookUtil {
         @Override
         public boolean handleMessage(Message msg) {
             Log.e("HookUtil", "msg=" + msg);
+            hookStartActivity(msg);
             hookStartService(msg);
             Log.e("HookUtil", "--------------msg=" + msg);
             handler.handleMessage(msg);
@@ -59,6 +62,25 @@ public class HookUtil {
 
     }
 
+    private static void hookStartActivity(Message msg){
+        if (msg.what == 100) {
+            Object obj = msg.obj;//ActivityClientRecord
+            try{
+                //拿到开启ProxyActivity的Intent
+                Field intentField = obj.getClass().getDeclaredField("intent");
+                intentField.setAccessible(true);
+                Intent proxyInent = (Intent) intentField.get(obj);
+                //拿到实际要开启的Activity的Intent
+//                Intent realIntent = proxyInent.getParcelableExtra("oldIntent");
+//                if (realIntent != null) {
+//                    proxyInent.setComponent(realIntent.getComponent());//替换要开启的类名
+//                }
+                proxyInent.setComponent(activity); //插件包
+            }catch (Exception e){
+                Log.i("HookUtil","lauchActivity falied");
+            }
+        }
+        }
     private static void hookStartService(Message msg) {
         if (msg.what == 114) {  //create Service
             try {

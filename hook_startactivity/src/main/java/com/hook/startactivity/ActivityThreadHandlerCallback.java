@@ -17,7 +17,7 @@ public class ActivityThreadHandlerCallback implements Handler.Callback {
 
         @Override
         public boolean handleMessage(Message msg) {
-            Log.i("HookUtil", "handleMessage");
+            Log.i("HookUtil", "handleMessage， msg="+msg);
             //替换之前的Intent
             if (msg.what ==100) {
                 Log.i("HookUtil","lauchActivity");

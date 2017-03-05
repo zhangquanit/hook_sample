@@ -5,6 +5,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.res.Resources;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
@@ -18,8 +19,20 @@ public class MainActivity extends Activity implements View.OnClickListener {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         findViewById(R.id.startService).setOnClickListener(this);
+        findViewById(R.id.bindService).setOnClickListener(this);
+        findViewById(R.id.startActivity).setOnClickListener(this);
 
         HookUtil.hookHandlerMessage();
+
+        System.out.println("resource="+getResources());
+        String appName = getResources().getString(R.string.app_name);
+        System.out.println("appName="+appName);
+
+        Resources appResource = getApplication().getResources();
+        System.out.println("app resource="+appResource);
+        String appName2 = appResource.getString(R.string.app_name);
+        System.out.println("appName2="+appName2);
+
     }
 
     public Intent getServiceIntent(){
@@ -34,6 +47,10 @@ public class MainActivity extends Activity implements View.OnClickListener {
     public void onClick(View v) {
         Intent serviceIntent = getServiceIntent();
         switch (v.getId()) {
+            case R.id.startActivity:
+                startActivity(new Intent(this,ProxyActivity.class));
+                overridePendingTransition(android.R.anim.slide_out_right,android.R.anim.slide_in_left);
+                break;
             case R.id.startService:
                 startService(serviceIntent);
                 break;
@@ -56,8 +73,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
         }
     }
 
-
-
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -65,4 +80,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
        if(null!=serviceConnection) unbindService(serviceConnection);
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        Log.e("HookUtil","onActivityResult--------------requestCode="+requestCode+",resultCode="+resultCode+",data="+data);
+        super.onActivityResult(requestCode, resultCode, data);
+    }
 }

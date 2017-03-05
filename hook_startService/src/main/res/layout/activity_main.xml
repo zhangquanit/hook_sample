@@ -8,10 +8,16 @@
     tools:context="com.hook.startservice.MainActivity">
 
     <Button
-    android:id="@+id/startService"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:text="Start Service" />
+        android:id="@+id/startActivity"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Start Activity" />
+
+    <Button
+        android:id="@+id/startService"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Start Service" />
 
     <Button
         android:id="@+id/bindService"
