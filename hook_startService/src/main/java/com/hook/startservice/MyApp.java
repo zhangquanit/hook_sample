@@ -57,6 +57,8 @@ public class MyApp extends Application {
 
     public void setUpClassLoader(Context context) {
         ClassLoader classLoader = MyApp.class.getClassLoader();
+        System.out.println("app classLoder="+classLoader);
+        System.out.println("app classLoder.parent="+classLoader.getParent());
         String nativeLibraryPath = null;
         try {
             nativeLibraryPath = (String) classLoader.getClass().getMethod("getLdLibraryPath", new Class[0]).invoke(classLoader, new Object[0]);

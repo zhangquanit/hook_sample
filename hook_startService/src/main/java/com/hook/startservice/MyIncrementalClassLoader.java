@@ -14,7 +14,7 @@ public class MyIncrementalClassLoader
   
   public MyIncrementalClassLoader(ClassLoader original, String nativeLibraryPath, String codeCacheDir, String  dexPath)
   {
-    super(original.getParent());
+    super(original.getParent()); //当前classloader.parent=original的parent
     
     this.delegateClassLoader = createDelegateClassLoader(nativeLibraryPath, codeCacheDir, dexPath, original);
   }
@@ -104,7 +104,8 @@ public class MyIncrementalClassLoader
   public static ClassLoader inject(ClassLoader classLoader, String nativeLibraryPath, String codeCacheDir, String dexPath)
   {
     MyIncrementalClassLoader incrementalClassLoader = new MyIncrementalClassLoader(classLoader, nativeLibraryPath, codeCacheDir, dexPath);
-    
+    System.out.println("incrementalClassLoader="+incrementalClassLoader);
+    System.out.println("incrementalClassLoader.parent="+incrementalClassLoader.getParent());
     setParent(classLoader, incrementalClassLoader);
     
     return incrementalClassLoader;
