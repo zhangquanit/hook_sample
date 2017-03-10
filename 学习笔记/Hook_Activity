@@ -1,11 +1,5 @@
-http://www.2cto.com/kf/201609/550038.html
 
-一、Hook操作步骤
-1、寻找hook点
-2、替换原来的对象为代理对象(静态代理或动态代理)
-3、在代理对象中拦截方法，并转调原始对象的方法。
-
-二、Hook技术之Activity的启动过程拦截
+----------------------Hook技术之Activity的启动过程拦截
 http://www.jianshu.com/p/69bfbda302df
 1、hook ActivityManagerService的startActivity  替换真实的Intent为ProxyActivity的proxy Intent，并将真实的intent封装到proxy Intent中
 2、为了不启动ProxyActivity，找一个合适的时机，把真实的Intent换过了来，启动我们真正想启动的Activity。
@@ -96,5 +90,3 @@ public final class ActivityThread {
     mCallBack.setAccessible(true);
     //这里设置了我们自己实现了接口的CallBack对象，在handleMessage前优先处理消息
     mCallBack.set(handler, new ActivityThreadHandlerCallback(handler)) ;
-
-三、Hook技术之Service的启动过程拦截
