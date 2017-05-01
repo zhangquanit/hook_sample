@@ -3,6 +3,9 @@ http://www.2cto.com/kf/201609/550038.html
 插件化原理解析——概要
 http://weishu.me/2016/01/28/understand-plugin-framework-overview/
 
+综合案例
+https://github.com/tiann/understand-plugin-framework
+
 
 一、Hook操作步骤
 1、寻找hook点
